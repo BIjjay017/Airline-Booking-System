@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard - BookSmart{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    <div class="admin-icon bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <i class="fas fa-user-shield fa-2x text-white"></i>
+                    </div>
+                    <h2 class="card-title text-gradient-primary">Admin Dashboard</h2>
+                    <p class="card-text text-muted">Welcome back, Administrator! Manage your BookSmart system efficiently.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Cards -->
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card management-card shadow-sm border-0 h-100">
+                <div class="card-body text-center p-4">
+                    <div class="management-icon bg-primary bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <i class="fas fa-users fa-2x text-white"></i>
+                    </div>
+                    <h5 class="card-title">User Management</h5>
+                    <p class="card-text text-muted">View, edit, and manage all user accounts in the system.</p>
+                    <a href="{{ url_for('admin.list_users') }}" class="btn btn-primary mt-3">
+                        <i class="fas fa-cog me-2"></i>Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card management-card shadow-sm border-0 h-100">
+                <div class="card-body text-center p-4">
+                    <div class="management-icon bg-success bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <i class="fas fa-plane fa-2x text-white"></i>
+                    </div>
+                    <h5 class="card-title">Flight Management</h5>
+                    <p class="card-text text-muted">Add, edit, or remove flights from the booking system.</p>
+                    <a href="{{ url_for('admin.list_flights') }}" class="btn btn-success mt-3">
+                        <i class="fas fa-cog me-2"></i>Manage Flights
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card management-card shadow-sm border-0 h-100">
+                <div class="card-body text-center p-4">
+                    <div class="management-icon bg-info bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <i class="fas fa-ticket-alt fa-2x text-white"></i>
+                    </div>
+                    <h5 class="card-title">Booking Management</h5>
+                    <p class="card-text text-muted">View and manage all bookings made by users.</p>
+                    <a href="{{ url_for('admin.list_bookings') }}" class="btn btn-info mt-3">
+                        <i class="fas fa-cog me-2"></i>Manage Bookings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('admin.logout') }}" class="btn btn-danger btn-lg px-5">
+                <i class="fas fa-sign-out-alt me-2"></i>Logout
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-gradient-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .admin-icon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .stat-card {
+        border-radius: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .management-card {
+        border-radius: 16px;
+        transition: transform 0.3s ease;
+    }
+
+    .management-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .management-icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto;
+    }
+
+    .btn {
+        border-radius: 10px;
+        padding: 0.6rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        border: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, #34d399 100%);
+        border: none;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+        border: none;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+        border: none;
+    }
+</style>
+{% endblock %}

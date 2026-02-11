@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<div class="card p-4 shadow-sm" style="max-width: 400px; margin: auto;">
+  <h2 class="mb-3 text-center">Create Account</h2>
+  <form method="POST" id="signup-form">
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name</label>
+      <input type="text" name="name" id="name" class="form-control" value="{{ name|default('') }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" name="email" id="email" class="form-control" value="{{ email|default('') }}" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input type="password" name="password" id="password" class="form-control" required>
+    </div>
+
+    <!-- Password strength bar -->
+    <div id="strength-bar-container" style="height: 10px; background: #eee; border-radius: 5px; overflow: hidden; margin-bottom: 10px;">
+      <div id="strength-bar" style="height: 100%; width: 0%; background-color: red; transition: width 0.3s, background-color 0.3s;"></div>
+    </div>
+
+    <!-- Password requirements -->
+    <ul id="password-requirements" style="list-style: none; padding-left: 0; font-size: 14px; color: red; margin-bottom: 15px;">
+      <li id="length" class="invalid">❌ At least 8 characters</li>
+      <li id="letter" class="invalid">❌ At least one letter</li>
+      <li id="number" class="invalid">❌ At least one number</li>
+      <li id="special" class="invalid">❌ At least one special character (@$!%*?&)</li>
+    </ul>
+
+    <button type="submit" id="submit-btn" class="btn btn-primary w-100" disabled>Sign Up</button>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-link d-block text-center mt-2">Already have an account?</a>
+  </form>
+</div>
+
+<script>
+const passwordInput = document.getElementById("password");
+const submitBtn = document.getElementById("submit-btn");
+const strengthBar = document.getElementById("strength-bar");
+
+const requirements = {
+    length: document.getElementById("length"),
+    letter: document.getElementById("letter"),
+    number: document.getElementById("number"),
+    special: document.getElementById("special")
+};
+
+function checkPassword() {
+    const value = passwordInput.value;
+    let allPassed = true;
+    let passedCount = 0;
+
+    // Length
+    if (value.length >= 8) {
+        requirements.length.textContent = "✅ At least 8 characters";
+        requirements.length.classList.add("valid");
+        requirements.length.classList.remove("invalid");
+        passedCount++;
+    } else {
+        requirements.length.textContent = "❌ At least 8 characters";
+        requirements.length.classList.add("invalid");
+        requirements.length.classList.remove("valid");
+        allPassed = false;
+    }
+
+    // Letter
+    if (/[A-Za-z]/.test(value)) {
+        requirements.letter.textContent = "✅ At least one letter";
+        requirements.letter.classList.add("valid");
+        requirements.letter.classList.remove("invalid");
+        passedCount++;
+    } else {
+        requirements.letter.textContent = "❌ At least one letter";
+        requirements.letter.classList.add("invalid");
+        requirements.letter.classList.remove("valid");
+        allPassed = false;
+    }
+
+    // Number
+    if (/\d/.test(value)) {
+        requirements.number.textContent = "✅ At least one number";
+        requirements.number.classList.add("valid");
+        requirements.number.classList.remove("invalid");
+        passedCount++;
+    } else {
+        requirements.number.textContent = "❌ At least one number";
+        requirements.number.classList.add("invalid");
+        requirements.number.classList.remove("valid");
+        allPassed = false;
+    }
+
+    // Special
+    if (/[@$!%*?&]/.test(value)) {
+        requirements.special.textContent = "✅ At least one special character (@$!%*?&)";
+        requirements.special.classList.add("valid");
+        requirements.special.classList.remove("invalid");
+        passedCount++;
+    } else {
+        requirements.special.textContent = "❌ At least one special character (@$!%*?&)";
+        requirements.special.classList.add("invalid");
+        requirements.special.classList.remove("valid");
+        allPassed = false;
+    }
+
+    // Update strength bar
+    const percent = (passedCount / 4) * 100;
+    strengthBar.style.width = percent + "%";
+    if (percent < 50) strengthBar.style.backgroundColor = "red";
+    else if (percent < 100) strengthBar.style.backgroundColor = "orange";
+    else strengthBar.style.backgroundColor = "green";
+
+    // Enable submit only if all passed
+    submitBtn.disabled = !allPassed;
+}
+
+passwordInput.addEventListener("input", checkPassword);
+</script>
+{% endblock %}

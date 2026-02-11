@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="card p-4 shadow-sm">
+  <h2>Welcome, {{ user_name }} ✈️</h2>
+  <p>What would you like to do?</p>
+  <ul>
+    <li><a href="{{ url_for('flights.search_flights') }}">Search Flights</a></li>
+    <li><a href="{{ url_for('bookings.view_history') }}">View Booking History</a></li>
+    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+  </ul>
+</div>
+{% endblock %}

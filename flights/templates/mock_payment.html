@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Mock Payment - BookSmart{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+      <div class="payment-icon bg-gradient-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+        <i class="fas fa-credit-card fa-2x text-white"></i>
+      </div>
+      <h2 class="text-gradient-primary">Mock Payment</h2>
+      <p class="text-muted">Complete your booking with a simulated payment</p>
+    </div>
+
+    <div class="row">
+      <!-- Booking Summary -->
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-header bg-light py-3">
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Booking Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="text-muted">Booking ID</span>
+              <span class="fw-bold">#{{ booking[0] }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="text-muted">Flight Number</span>
+              <span class="fw-bold">{{ booking[4] }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="text-muted">Number of Tickets</span>
+              <span class="fw-bold">{{ booking[2] }}</span>
+            </div>
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted">Price per Ticket</span>
+              <span class="fw-bold">${{ "%.2f"|format(booking[5]) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted">Taxes & Fees</span>
+              <span class="fw-bold">{{ "%.2f"|format(booking[2] * booking[5]) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Details -->
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-header bg-light py-3">
+            <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Details</h5>
+          </div>
+          <div class="card-body">
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <span class="h5 mb-0">Total Amount</span>
+              <span class="h4 text-primary fw-bold">${{ "%.2f"|format(booking[2] * booking[5]) }}</span>
+            </div>
+
+            <!-- Payment Method Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Payment Method</label>
+              <div class="d-grid gap-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" checked>
+                  <label class="form-check-label d-flex align-items-center" for="creditCard">
+                    <i class="fas fa-credit-card me-2 text-primary"></i> Credit/Debit Card
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="paypal">
+                  <label class="form-check-label d-flex align-items-center" for="paypal">
+                    <i class="fab fa-esewa me-2 text-primary"></i> Esewa
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="paymentMethod" id="bankTransfer">
+                  <label class="form-check-label d-flex align-items-center" for="bankTransfer">
+                    <i class="fas fa-university me-2 text-primary"></i> Bank Transfer
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card shadow-sm border-0">
+      <div class="card-body text-center py-4">
+
+
+        <form method="post">
+          <div class="d-flex gap-3 justify-content-center">
+            <button type="submit" name="action" value="pay" class="btn btn-success btn-lg px-5 py-3">
+              <i class="fas fa-check-circle me-2"></i>Confirm Payment
+            </button>
+            <button type="submit" name="action" value="cancel" class="btn btn-outline-danger btn-lg px-5 py-3">
+              <i class="fas fa-times-circle me-2"></i>Cancel Booking
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Security Badges -->
+    <div class="text-center mt-4">
+      <div class="d-flex justify-content-center align-items-center gap-4">
+        <div class="d-flex align-items-center text-muted">
+          <i class="fas fa-lock-shield text-success me-2"></i>
+          <small>Secure Payment</small>
+        </div>
+        <div class="d-flex align-items-center text-muted">
+          <i class="fas fa-shield-check text-success me-2"></i>
+          <small>SSL Encrypted</small>
+        </div>
+        <div class="d-flex align-items-center text-muted">
+          <i class="fas fa-user-shield text-success me-2"></i>
+          <small>Privacy Protected</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .text-gradient-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%) !important;
+  }
+
+  .payment-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .card {
+    border-radius: 16px;
+  }
+
+  .card-header {
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 16px 16px 0 0 !important;
+  }
+
+  .btn {
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success) 0%, #34d399 100%);
+    border: none;
+  }
+
+  .btn-success:hover {
+    background: linear-gradient(135deg, #34d399 0%, var(--success) 100%);
+  }
+
+  .form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+  }
+
+  .form-check {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .form-check:hover {
+    border-color: var(--primary);
+    background-color: #f8fafc;
+  }
+</style>
+{% endblock %}

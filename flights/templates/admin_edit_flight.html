@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Flight - BookSmart Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f5f7ff;
+            color: #334155;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--dark) 0%, #334155 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-header h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-header h2 i {
+            margin-right: 12px;
+            font-size: 1.8rem;
+        }
+
+        .form-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .form-header h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--dark);
+        }
+
+        .form-body {
+            padding: 2rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.15);
+        }
+
+        .input-group-text {
+            background: transparent;
+            border-radius: 10px 0 0 10px;
+            border: 2px solid #e2e8f0;
+            border-right: none;
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 0.8rem 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(100, 116, 139, 0.3);
+        }
+
+        .flight-info {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .flight-info-title {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .flight-info-content {
+            color: #64748b;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .form-section-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="page-header">
+            <h2><i class="fas fa-edit"></i> Edit Flight</h2>
+        </div>
+
+        <div class="form-card">
+            <div class="form-header">
+                <h3>Flight Details</h3>
+            </div>
+
+            <div class="form-body">
+                <!-- Flight Information Summary -->
+                <div class="flight-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="flight-info-title">Current Flight Number</p>
+                            <p class="flight-info-content">{{ flight[1] }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="flight-info-title">Flight ID</p>
+                            <p class="flight-info-content">#{{ flight[0] }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST">
+                    <!-- Flight Details Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">Flight Information</h4>
+
+                        <div class="mb-3">
+                            <label class="form-label">Flight Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-hashtag"></i></span>
+                                <input type="text" class="form-control" name="flight_number" value="{{ flight[1] }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Origin Airport</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-plane-departure"></i></span>
+                                    <select class="form-select" name="origin_id" required>
+                                        {% for airport in airports %}
+                                            <option value="{{ airport[0] }}" {% if airport[0] == flight[2] %}selected{% endif %}>
+                                                {{ airport[1] }} - {{ airport[2] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Destination Airport</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-plane-arrival"></i></span>
+                                    <select class="form-select" name="destination_id" required>
+                                        {% for airport in airports %}
+                                            <option value="{{ airport[0] }}" {% if airport[0] == flight[3] %}selected{% endif %}>
+                                                {{ airport[1] }} - {{ airport[2] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">Schedule & Duration</h4>
+
+                        <div class="mb-3">
+                            <label for="departure_time" class="form-label">Departure Time</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                <input type="datetime-local" id="departure_time" name="departure_time"
+                                       class="form-control" min="{{ today }}"
+                                       value="{{ flight[4]|replace(' ', 'T') }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration (HH:MM)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-clock"></i></span>
+                                <input type="text" id="duration" name="duration" class="form-control"
+                                       placeholder="e.g. 02:30 for 2h 30m"
+                                       value="{{ flight[5] }}" required>
+                            </div>
+                            <div class="form-text">Enter duration in hours and minutes format (HH:MM)</div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing & Capacity Section -->
+                    <div class="form-section">
+                        <h4 class="form-section-title">Pricing & Capacity</h4>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Price (NRS)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                                    <input type="number" class="form-control" name="price" step="0.01" value="{{ flight[6] }}" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Total Seats</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-chair"></i></span>
+                                    <input type="number" class="form-control" name="total_seats" value="{{ flight[7] }}" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{{ url_for('admin.list_flights') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
