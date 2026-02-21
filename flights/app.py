@@ -4,20 +4,24 @@ from flights.routes.admin import admin_bp
 from flights.routes.auth import auth_bp
 from flights.routes.flights import flights_bp
 from flights.routes.bookings import bookings_bp
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = "289102891728942"
+    app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key")
 
-    # Email config
-    # Looking to send emails in production? Check out our Email API/SMTP product!
-    app.config['MAIL_SERVER'] = 'sandbox.smtp.mailtrap.io'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USERNAME'] = '1d38fb15116214'
-    app.config['MAIL_PASSWORD'] = 'c90100fde4c206'
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USE_SSL'] = False
+    # Email config from environment variables
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'sandbox.smtp.mailtrap.io')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+    app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False').lower() == 'true'
 
     mail = Mail(app)
     # Register blueprints

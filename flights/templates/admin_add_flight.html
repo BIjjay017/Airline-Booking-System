@@ -1,109 +1,249 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Add Flight</h2>
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">Flight Number</label>
-            <input type="text" name="flight_number" class="form-control" required>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Add New Flight</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="flightForm">
+                        <div class="row g-3">
+                            <!-- Flight Number -->
+                            <div class="col-md-6">
+                                <label class="form-label">Flight Number</label>
+                                <input type="text" name="flight_number" class="form-control" 
+                                       placeholder="e.g., YT-101" required>
+                            </div>
+
+                            <!-- Aircraft Type -->
+                            <div class="col-md-6">
+                                <label class="form-label">Aircraft Type</label>
+                                <select name="aircraft_type" class="form-select" id="aircraft_type" required>
+                                    <option value="">Select Aircraft</option>
+                                    {% for aircraft in aircraft_types %}
+                                    <option value="{{ aircraft[1] }}">{{ aircraft[1] }} - {{ aircraft[2] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Origin -->
+                            <div class="col-md-6">
+                                <label class="form-label">Origin Airport</label>
+                                <select name="origin_id" class="form-select" id="origin_id" required>
+                                    <option value="">Select Origin</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport[0] }}" data-code="{{ airport[1] }}">
+                                        {{ airport[1] }} - {{ airport[2] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Destination -->
+                            <div class="col-md-6">
+                                <label class="form-label">Destination Airport</label>
+                                <select name="destination_id" class="form-select" id="destination_id" required>
+                                    <option value="">Select Destination</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport[0] }}" data-code="{{ airport[1] }}">
+                                        {{ airport[1] }} - {{ airport[2] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Departure Time -->
+                            <div class="col-md-4">
+                                <label class="form-label">Departure Time</label>
+                                <input type="datetime-local" class="form-control" id="departure_time" 
+                                       name="departure_time" min="{{ today }}" required>
+                            </div>
+
+                            <!-- Duration Hours -->
+                            <div class="col-md-4">
+                                <label class="form-label">Duration (Hours)</label>
+                                <input type="number" class="form-control" id="duration_hours" 
+                                       name="duration_hours" min="0" value="0" required>
+                            </div>
+
+                            <!-- Duration Minutes -->
+                            <div class="col-md-4">
+                                <label class="form-label">Duration (Minutes)</label>
+                                <input type="number" class="form-control" id="duration_minutes" 
+                                       name="duration_minutes" min="0" max="59" value="30">
+                            </div>
+
+                            <!-- Total Seats -->
+                            <div class="col-md-6">
+                                <label class="form-label">Total Seats</label>
+                                <input type="number" name="total_seats" class="form-control" 
+                                       value="72" min="1" required>
+                            </div>
+
+                            <!-- Flight Class -->
+                            <div class="col-md-6">
+                                <label class="form-label">Flight Class</label>
+                                <select name="flight_class" class="form-select" id="flight_class" required>
+                                    <option value="">Select Class</option>
+                                    {% for cls in flight_classes %}
+                                    <option value="{{ cls[1] }}">{{ cls[1] }} - {{ cls[2] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Baggage Allowance -->
+                            <div class="col-md-6">
+                                <label class="form-label">Baggage Allowance</label>
+                                <select name="baggage_allowance" class="form-select" id="baggage_allowance" required>
+                                    <option value="">Select Baggage</option>
+                                    {% for bag in baggage_options %}
+                                    <option value="{{ bag[1] }}">{{ bag[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Refund Type -->
+                            <div class="col-md-6">
+                                <label class="form-label">Refund Policy</label>
+                                <select name="refund_type" class="form-select" id="refund_type" required>
+                                    <option value="">Select Policy</option>
+                                    <option value="NonRefundable">Non-Refundable</option>
+                                    <option value="Refundable">Refundable</option>
+                                </select>
+                            </div>
+
+                            <!-- Buttons -->
+                            <div class="col-12 mt-4">
+                                <button type="button" class="btn btn-outline-primary me-2" id="predictBtn">
+                                    Predict Price
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    Save Flight
+                                </button>
+                                <a href="{{ url_for('admin.list_flights') }}" class="btn btn-secondary">
+                                    Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Origin</label>
-            <select name="origin_id" class="form-select" required>
-                <option value="">Select Origin</option>
-                {% for airport in airports %}
-                <option value="{{ airport[0] }}">{{ airport[1] }} - {{ airport[2] }}</option>
-                {% endfor %}
-            </select>
+        <!-- Price Preview Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Price Prediction</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div id="priceDisplay">
+                        <p class="text-muted mb-2">Fill in flight details and click "Predict Price"</p>
+                        <h2 class="text-success mb-0" id="predictedPrice">--</h2>
+                    </div>
+                    <div id="priceLoading" class="d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 mb-0">Calculating...</p>
+                    </div>
+                    <div id="priceError" class="alert alert-danger d-none mt-2 mb-0"></div>
+                </div>
+                <div class="card-footer text-muted small">
+                    Price is automatically set using ML model
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label class="form-label">Destination</label>
-            <select name="destination_id" class="form-select" required>
-                <option value="">Select Destination</option>
-                {% for airport in airports %}
-                <option value="{{ airport[0] }}">{{ airport[1] }} - {{ airport[2] }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label for="departure_time" class="form-label">Departure Time</label>
-            <input type="datetime-local" class="form-control" id="departure_time" name="departure_time"
-                   min="{{ today }}" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="duration_hours" class="form-label">Duration (Hours)</label>
-            <input type="number" class="form-control" id="duration_hours" name="duration_hours" min="0" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="duration_minutes" class="form-label">Duration (Minutes)</label>
-            <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" min="0" max="59" value="0">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Total Seats</label>
-            <input type="number" name="total_seats" class="form-control" value="150" required>
-        </div>
-
-
-        <div class="mb-3">
-            <label class="form-label">Aircraft Type</label>
-             <select name="Aircraft Type" class="form-select" required>
-                <option value="">Select Aircraft type</option>
-                <option value="ATR72">ATR72</option>
-                <option value="ATR">ATR</option>
-                <option value="CRJ200">CRJ200</option>
-                <option value="Q400">Q400</option>
-
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Class</label>
-            <select name="class" class="form-select" required>
-                <option value="">Select Class</option>
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E">E</option>
-                <option value="E1">E1</option>
-                <option value="F">F</option>
-                <option value="G">G</option>
-                <option value="I">I</option>
-                <option value="N">N</option>
-                <option value="S">S</option>
-                <option value="T">T</option>
-                <option value="Y">Y</option>
-            </select>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Baggage Allowance (kg)</label>
-            <input type="number" name="baggage_allowance" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Refund Type</label>
-            <select name="refund_type" class="form-select" required>
-                <option value="">Select Refund Policy</option>
-                <option value="NonRefundable">Non-Refundable</option>
-                <option value="Refundable">Full Refund</option>
-            </select>
-        </div>
-
-        <!-- Remove manual price input, ML will set this -->
-        {# <div class="mb-3">
-            <label class="form-label">Price</label>
-            <input type="number" step="0.01" name="price" class="form-control" required>
-        </div> #}
-
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="{{ url_for('admin.list_flights') }}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
 </div>
+
+<script>
+document.getElementById('predictBtn').addEventListener('click', async function() {
+    const priceDisplay = document.getElementById('priceDisplay');
+    const priceLoading = document.getElementById('priceLoading');
+    const priceError = document.getElementById('priceError');
+    const predictedPrice = document.getElementById('predictedPrice');
+    
+    // Get form values
+    const originSelect = document.getElementById('origin_id');
+    const destSelect = document.getElementById('destination_id');
+    const departureTime = document.getElementById('departure_time').value;
+    const durationHours = parseInt(document.getElementById('duration_hours').value) || 0;
+    const durationMinutes = parseInt(document.getElementById('duration_minutes').value) || 0;
+    
+    // Get airport codes from data attributes
+    const originCode = originSelect.options[originSelect.selectedIndex]?.dataset?.code || '';
+    const destCode = destSelect.options[destSelect.selectedIndex]?.dataset?.code || '';
+    
+    // Calculate arrival time
+    let arrivalTime = '';
+    if (departureTime) {
+        const depDate = new Date(departureTime);
+        depDate.setHours(depDate.getHours() + durationHours);
+        depDate.setMinutes(depDate.getMinutes() + durationMinutes);
+        arrivalTime = depDate.toTimeString().slice(0, 5);
+    }
+    
+    const data = {
+        aircraft_type: document.getElementById('aircraft_type').value,
+        departure_airport: originCode,
+        arrival_airport: destCode,
+        departure_time: departureTime ? departureTime.split('T')[1] : '',
+        arrival_time: arrivalTime,
+        flight_class: document.getElementById('flight_class').value,
+        baggage_allowance: document.getElementById('baggage_allowance').value,
+        refundable_status: document.getElementById('refund_type').value,
+        date: departureTime ? departureTime.split('T')[0] : ''
+    };
+    
+    // Validate
+    if (!data.departure_airport || !data.arrival_airport) {
+        priceError.textContent = 'Please select origin and destination airports';
+        priceError.classList.remove('d-none');
+        return;
+    }
+    
+    if (data.departure_airport === data.arrival_airport) {
+        priceError.textContent = 'Origin and destination must be different';
+        priceError.classList.remove('d-none');
+        return;
+    }
+    
+    // Show loading
+    priceDisplay.classList.add('d-none');
+    priceError.classList.add('d-none');
+    priceLoading.classList.remove('d-none');
+    
+    try {
+        const response = await fetch('{{ url_for("admin.api_predict_price") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        priceLoading.classList.add('d-none');
+        priceDisplay.classList.remove('d-none');
+        
+        if (result.error) {
+            priceError.textContent = result.error;
+            priceError.classList.remove('d-none');
+            predictedPrice.textContent = '--';
+        } else {
+            predictedPrice.textContent = 'NPR ' + result.price.toLocaleString();
+            priceError.classList.add('d-none');
+        }
+    } catch (error) {
+        priceLoading.classList.add('d-none');
+        priceDisplay.classList.remove('d-none');
+        priceError.textContent = 'Failed to predict price: ' + error.message;
+        priceError.classList.remove('d-none');
+    }
+});
+</script>
 {% endblock %}

@@ -1,138 +1,20 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Price Prediction Admin</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% extends "base.html" %}
 
-        .main-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            margin-top: 30px;
-            padding: 30px;
-        }
-
-        .form-control, .form-select {
-            border-radius: 10px;
-            border: 2px solid #e9ecef;
-            padding: 12px;
-            font-size: 16px;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-
-        .btn-predict {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 50px;
-            padding: 15px 40px;
-            font-weight: 600;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: white;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .btn-predict:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-            color: white;
-        }
-
-        .price-result {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #28a745;
-            text-align: center;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-            margin: 20px 0;
-        }
-
-        .section-title {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 20px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .icon {
-            color: #667eea;
-            margin-right: 8px;
-        }
-
-        .form-label {
-            font-weight: 500;
-            color: #555;
-            margin-bottom: 8px;
-        }
-
-        .alert {
-            border-radius: 15px;
-            padding: 15px 20px;
-        }
-
-        .navbar {
-            background: rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.8rem;
-            color: white !important;
-        }
-
-        .loading {
-            display: none;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <span class="navbar-brand">
-                <i class="fas fa-plane icon"></i>
-                Flight Price Prediction System
-            </span>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="main-container">
-                    <h1 class="text-center mb-4">
-                        <i class="fas fa-calculator icon"></i>
-                        Predict Flight Price
-                    </h1>
-
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Flight Price Prediction</h4>
+                </div>
+                <div class="card-body">
+                    
                     <!-- Flash Messages -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                            <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                                 {{ message }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
@@ -140,256 +22,154 @@
                         {% endif %}
                     {% endwith %}
 
-                    <!-- Model Error -->
+                    <!-- Model Status -->
                     {% if load_error %}
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Note:</strong> Model not loaded properly. Using fallback prediction method.
+                        <strong>Note:</strong> Using fallback prediction method.
                     </div>
                     {% endif %}
 
                     <!-- Price Result -->
                     {% if price %}
                     <div class="alert alert-success text-center">
-                        <h3>Predicted Flight Price</h3>
-                        <div class="price-result">NPR {{ "%.2f"|format(price) }}</div>
-                        <small class="text-muted">This is an estimated price based on your input parameters</small>
+                        <h5 class="mb-1">Predicted Price</h5>
+                        <h2 class="text-success mb-0">NPR {{ "%.2f"|format(price) }}</h2>
+                        <small class="text-muted">Estimated based on ML model</small>
                     </div>
                     {% endif %}
 
                     <!-- Prediction Form -->
                     <form method="POST" id="predictionForm">
-                        <div class="row">
+                        <div class="row g-3">
+                            <!-- Route Section -->
                             <div class="col-12">
-                                <h4 class="section-title">
-                                    <i class="fas fa-plane icon"></i>
-                                    Flight Details
-                                </h4>
+                                <h6 class="text-muted border-bottom pb-2">Route Information</h6>
                             </div>
-
-                            <!-- Aircraft Type -->
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-plane icon"></i>
-                                    Aircraft Type
-                                </label>
-                                <select class="form-select" name="aircraft_type" required>
-                                    <option value="">Select Aircraft</option>
-                                    <option value="ATR72" selected>ATR72</option>
-                                    <option value="ATR42">ATR42</option>
-                                    <option value="DASH-8">DASH-8</option>
-                                    <option value="A320">A320</option>
-                                    <option value="737-800">Boeing 737-800</option>
-                                </select>
-                            </div>
-
-                            <!-- Flight Class -->
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-crown icon"></i>
-                                    Flight Class
-                                </label>
-                                <select class="form-select" name="flight_class" required>
-                                    <option value="">Select Class</option>
-                                    <option value="E1" selected>Economy (E1)</option>
-                                    <option value="E2">Economy Plus (E2)</option>
-                                    <option value="B1">Business (B1)</option>
-                                </select>
-                            </div>
-
-                            <!-- Route Information -->
-                            <div class="col-12">
-                                <h4 class="section-title">
-                                    <i class="fas fa-route icon"></i>
-                                    Route Information
-                                </h4>
-                            </div>
-
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-map-marker-alt icon"></i>
-                                    Departure Airport
-                                </label>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Departure Airport</label>
                                 <select class="form-select" name="departure_airport" required>
                                     <option value="">Select Departure</option>
-                                    <option value="KATHMANDU" selected>Kathmandu (KTM)</option>
-                                    <option value="POKHARA">Pokhara (PKR)</option>
-                                    <option value="BHARATPUR">Bharatpur (BHR)</option>
-                                    <option value="BIRATNAGAR">Biratnagar (BIR)</option>
-                                    <option value="NEPALGUNJ">Nepalgunj (KEP)</option>
-                                    <option value="DHANGADHI">Dhangadhi (DHI)</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport[1] }}" {% if request.form.get('departure_airport') == airport[1] %}selected{% endif %}>
+                                        {{ airport[1] }} - {{ airport[2] }}
+                                    </option>
+                                    {% endfor %}
                                 </select>
                             </div>
 
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-map-marker icon"></i>
-                                    Arrival Airport
-                                </label>
+                            <div class="col-md-6">
+                                <label class="form-label">Arrival Airport</label>
                                 <select class="form-select" name="arrival_airport" required>
                                     <option value="">Select Arrival</option>
-                                    <option value="POKHARA" selected>Pokhara (PKR)</option>
-                                    <option value="KATHMANDU">Kathmandu (KTM)</option>
-                                    <option value="BHARATPUR">Bharatpur (BHR)</option>
-                                    <option value="BIRATNAGAR">Biratnagar (BIR)</option>
-                                    <option value="NEPALGUNJ">Nepalgunj (KEP)</option>
-                                    <option value="DHANGADHI">Dhangadhi (DHI)</option>
+                                    {% for airport in airports %}
+                                    <option value="{{ airport[1] }}" {% if request.form.get('arrival_airport') == airport[1] %}selected{% endif %}>
+                                        {{ airport[1] }} - {{ airport[2] }}
+                                    </option>
+                                    {% endfor %}
                                 </select>
                             </div>
 
-                            <!-- Time Information -->
-                            <div class="col-12">
-                                <h4 class="section-title">
-                                    <i class="fas fa-clock icon"></i>
-                                    Schedule Information
-                                </h4>
+                            <!-- Flight Details Section -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted border-bottom pb-2">Flight Details</h6>
                             </div>
 
-                            <div class="col-md-4 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar-alt icon"></i>
-                                    Flight Date
-                                </label>
-                                <input type="text" class="form-control" name="date"
-                                       value="29-Aug" placeholder="e.g., 29-Aug" required>
-                                <small class="form-text text-muted">Format: DD-MMM</small>
+                            <div class="col-md-6">
+                                <label class="form-label">Aircraft Type</label>
+                                <select class="form-select" name="aircraft_type" required>
+                                    <option value="">Select Aircraft</option>
+                                    {% for aircraft in aircraft_types %}
+                                    <option value="{{ aircraft[1] }}" {% if request.form.get('aircraft_type') == aircraft[1] %}selected{% endif %}>
+                                        {{ aircraft[1] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
                             </div>
 
-                            <div class="col-md-4 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-plane-departure icon"></i>
-                                    Departure Time
-                                </label>
+                            <div class="col-md-6">
+                                <label class="form-label">Flight Class</label>
+                                <select class="form-select" name="flight_class" required>
+                                    <option value="">Select Class</option>
+                                    {% for cls in flight_classes %}
+                                    <option value="{{ cls[1] }}" {% if request.form.get('flight_class') == cls[1] %}selected{% endif %}>
+                                        {{ cls[1] }} - {{ cls[2] }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Schedule Section -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted border-bottom pb-2">Schedule</h6>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Flight Date</label>
+                                <input type="date" class="form-control" name="date" 
+                                       value="{{ request.form.get('date', today) }}" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Departure Time</label>
                                 <input type="time" class="form-control" name="departure_time"
-                                       value="18:50" required>
+                                       value="{{ request.form.get('departure_time', '09:00') }}" required>
                             </div>
 
-                            <div class="col-md-4 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-plane-arrival icon"></i>
-                                    Arrival Time
-                                </label>
+                            <div class="col-md-4">
+                                <label class="form-label">Arrival Time</label>
                                 <input type="time" class="form-control" name="arrival_time"
-                                       value="19:15" required>
+                                       value="{{ request.form.get('arrival_time', '09:30') }}" required>
                             </div>
 
-                            <!-- Service Information -->
-                            <div class="col-12">
-                                <h4 class="section-title">
-                                    <i class="fas fa-suitcase icon"></i>
-                                    Service Information
-                                </h4>
+                            <!-- Service Section -->
+                            <div class="col-12 mt-4">
+                                <h6 class="text-muted border-bottom pb-2">Service Options</h6>
                             </div>
 
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-luggage-cart icon"></i>
-                                    Baggage Allowance
-                                </label>
+                            <div class="col-md-6">
+                                <label class="form-label">Baggage Allowance</label>
                                 <select class="form-select" name="baggage_allowance" required>
                                     <option value="">Select Baggage</option>
-                                    <option value="15KG + 5KG" selected>15KG + 5KG (Standard)</option>
-                                    <option value="20KG">20KG</option>
-                                    <option value="25KG">25KG</option>
-                                    <option value="30KG">30KG</option>
-                                    <option value="1 Piece">1 Piece (23KG)</option>
-                                    <option value="2 Pieces">2 Pieces (46KG)</option>
+                                    {% for bag in baggage_options %}
+                                    <option value="{{ bag[1] }}" {% if request.form.get('baggage_allowance') == bag[1] %}selected{% endif %}>
+                                        {{ bag[1] }}
+                                    </option>
+                                    {% endfor %}
                                 </select>
                             </div>
 
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-undo icon"></i>
-                                    Refundable Status
-                                </label>
+                            <div class="col-md-6">
+                                <label class="form-label">Refund Policy</label>
                                 <select class="form-select" name="refundable_status" required>
-                                    <option value="">Select Refund Policy</option>
-                                    <option value="NonRefundable" selected>Non-Refundable</option>
-                                    <option value="Refundable">Refundable</option>
+                                    <option value="">Select Policy</option>
+                                    <option value="NonRefundable" {% if request.form.get('refundable_status') == 'NonRefundable' %}selected{% endif %}>
+                                        Non-Refundable
+                                    </option>
+                                    <option value="Refundable" {% if request.form.get('refundable_status') == 'Refundable' %}selected{% endif %}>
+                                        Refundable
+                                    </option>
                                 </select>
                             </div>
-                        </div>
 
-                        <!-- Submit Button -->
-                        <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-predict" id="predictBtn">
-                                    <i class="fas fa-calculator"></i>
-                                    <span class="normal-text">Predict Price</span>
-                                    <span class="loading">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                        Calculating...
-                                    </span>
+                            <!-- Submit -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    Predict Price
                                 </button>
                             </div>
                         </div>
                     </form>
-
-                    <!-- Model Status -->
-                    <div class="mt-4 text-center">
-                        {% if load_error %}
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            <small>Using intelligent rule-based prediction system</small>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i>
-                            <small>Machine learning model loaded and ready</small>
-                        </div>
-                        {% endif %}
-                    </div>
+                </div>
+                <div class="card-footer text-center text-muted small">
+                    {% if not load_error %}
+                    ML Model Active
+                    {% else %}
+                    Using Fallback Prediction
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Add loading animation on form submit
-        document.getElementById('predictionForm').addEventListener('submit', function() {
-            const btn = document.getElementById('predictBtn');
-            const normalText = btn.querySelector('.normal-text');
-            const loadingText = btn.querySelector('.loading');
-
-            normalText.style.display = 'none';
-            loadingText.style.display = 'inline';
-            btn.disabled = true;
-        });
-
-        // Auto-fill arrival time based on departure time and route
-        function updateArrivalTime() {
-            const depTime = document.querySelector('input[name="departure_time"]').value;
-            const depAirport = document.querySelector('select[name="departure_airport"]').value;
-            const arrAirport = document.querySelector('select[name="arrival_airport"]').value;
-
-            if (depTime && depAirport && arrAirport) {
-                const [hours, minutes] = depTime.split(':').map(Number);
-                let duration = 25; // Default 25 minutes
-
-                // Adjust duration based on route
-                if ((depAirport === 'KATHMANDU' && arrAirport === 'POKHARA') ||
-                    (depAirport === 'POKHARA' && arrAirport === 'KATHMANDU')) {
-                    duration = 25;
-                } else if (depAirport === 'KATHMANDU' && arrAirport === 'BIRATNAGAR') {
-                    duration = 45;
-                } else if (depAirport === 'KATHMANDU' && arrAirport === 'NEPALGUNJ') {
-                    duration = 65;
-                }
-
-                const arrivalMinutes = hours * 60 + minutes + duration;
-                const arrHours = Math.floor(arrivalMinutes / 60) % 24;
-                const arrMins = arrivalMinutes % 60;
-
-                const arrivalTime = `${arrHours.toString().padStart(2, '0')}:${arrMins.toString().padStart(2, '0')}`;
-                document.querySelector('input[name="arrival_time"]').value = arrivalTime;
-            }
-        }
-
-        // Add event listeners for auto-calculation
-        document.querySelector('input[name="departure_time"]').addEventListener('change', updateArrivalTime);
-        document.querySelector('select[name="departure_airport"]').addEventListener('change', updateArrivalTime);
-        document.querySelector('select[name="arrival_airport"]').addEventListener('change', updateArrivalTime);
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

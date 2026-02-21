@@ -126,31 +126,100 @@ load_model()
 # -----------------------
 # PREDICTION FUNCTION
 # -----------------------
+def normalize_key(key):
+    """Normalize form data keys to handle different formats"""
+    key_mapping = {
+        'airline_name': 'airline_name',
+        'airline name': 'airline_name',
+        'Airline Name': 'airline_name',
+        'aircraft_type': 'aircraft_type',
+        'aircraft type': 'aircraft_type',
+        'Aircraft Type': 'aircraft_type',
+        'departure_airport': 'departure_airport',
+        'departure airport': 'departure_airport',
+        'Departure Airport': 'departure_airport',
+        'arrival_airport': 'arrival_airport',
+        'arrival airport': 'arrival_airport',
+        'Arrival Airport': 'arrival_airport',
+        'departure_time': 'departure_time',
+        'departure time': 'departure_time',
+        'Departure Time': 'departure_time',
+        'arrival_time': 'arrival_time',
+        'arrival time': 'arrival_time',
+        'Arrival Time': 'arrival_time',
+        'flight_class': 'flight_class',
+        'class': 'flight_class',
+        'Class': 'flight_class',
+        'baggage_allowance': 'baggage_allowance',
+        'baggage allowance': 'baggage_allowance',
+        'Baggage Allowance': 'baggage_allowance',
+        'refundable_status': 'refundable_status',
+        'refund_type': 'refundable_status',
+        'Refundable Status': 'refundable_status',
+        'date': 'date',
+        'Date': 'date',
+    }
+    return key_mapping.get(key, key.lower().replace(' ', '_'))
+
+
+def validate_prediction_input(data):
+    """Validate prediction input and return errors if any"""
+    errors = []
+    
+    if not data.get('departure_airport'):
+        errors.append("Departure airport is required")
+    if not data.get('arrival_airport'):
+        errors.append("Arrival airport is required")
+    if data.get('departure_airport') == data.get('arrival_airport'):
+        errors.append("Departure and arrival airports must be different")
+    if not data.get('departure_time'):
+        errors.append("Departure time is required")
+    if not data.get('arrival_time'):
+        errors.append("Arrival time is required")
+    if not data.get('date'):
+        errors.append("Flight date is required")
+        
+    return errors
+
+
 def predict_from_form(form_data):
     """
-    form_data: dict from admin form with keys like:
-        'airline_name', 'aircraft_type', 'departure_airport', 'arrival_airport',
-        'departure_time', 'arrival_time', 'flight_class', 'baggage_allowance',
-        'refundable_status', 'date'
+    Predict flight price from form data.
+    Handles multiple key formats for flexibility.
+    
+    Args:
+        form_data: dict with flight details
+        
+    Returns:
+        float: predicted price or fallback price
     """
     if model is None:
         print("DEBUG: ML model not loaded, using fallback")
     else:
         print("DEBUG: ML model loaded, using it for prediction")
 
-    # Extract & clean data
+    # Normalize keys and extract data
+    normalized = {}
+    for key, value in form_data.items():
+        norm_key = normalize_key(key)
+        if value is not None:
+            normalized[norm_key] = str(value).strip() if value else ''
+    
+    # Build clean data dict with defaults
     data = {
-        'Airline Name': form_data.get('airline_name', 'YETI AIRLINES').strip(),
-        'Aircraft Type': form_data.get('aircraft_type', 'ATR72').strip(),
-        'Departure Airport': form_data.get('departure_airport', 'KATHMANDU').strip().upper(),
-        'Arrival Airport': form_data.get('arrival_airport', 'POKHARA').strip().upper(),
-        'Departure Time': form_data.get('departure_time', '18:50').strip(),
-        'Arrival Time': form_data.get('arrival_time', '19:15').strip(),
-        'Class': form_data.get('flight_class', 'E1').strip(),
-        'Baggage Allowance': form_data.get('baggage_allowance', '15KG + 5KG').strip(),
-        'Refundable Status': form_data.get('refundable_status', 'NonRefundable').strip(),
-        'Date': form_data.get('date', '29-Aug').strip()
+        'Airline Name': normalized.get('airline_name', 'YETI AIRLINES'),
+        'Aircraft Type': normalized.get('aircraft_type', 'ATR72'),
+        'Departure Airport': normalized.get('departure_airport', 'KATHMANDU').upper(),
+        'Arrival Airport': normalized.get('arrival_airport', 'POKHARA').upper(),
+        'Departure Time': normalized.get('departure_time', '18:50'),
+        'Arrival Time': normalized.get('arrival_time', '19:15'),
+        'Class': normalized.get('flight_class', 'E1'),
+        'Baggage Allowance': normalized.get('baggage_allowance', '15KG + 5KG'),
+        'Refundable Status': normalized.get('refundable_status', 'NonRefundable'),
+        'Date': normalized.get('date', '29-Aug')
     }
+    
+    print(f"DEBUG: Normalized prediction data: {data}")
 
     try:
         if model is not None:
@@ -160,7 +229,7 @@ def predict_from_form(form_data):
             if flight_duration < 0:
                 flight_duration += 1440
             baggage_kg = baggage_to_kg(data['Baggage Allowance'])
-            refundable_binary = 1 if 'Refundable' in data['Refundable Status'] else 0
+            refundable_binary = 1 if 'Refundable' in data['Refundable Status'] and 'Non' not in data['Refundable Status'] else 0
             parsed_date = try_parse_date(data['Date'])
             if parsed_date is None:
                 parsed_date = datetime.now()
@@ -170,9 +239,10 @@ def predict_from_form(form_data):
             try:
                 prediction = model.predict(basic_features)[0]
                 if prediction > 0:
+                    print(f"DEBUG: ML prediction successful: {prediction}")
                     return float(prediction)
-            except:
-                pass
+            except Exception as e:
+                print(f"DEBUG: Basic features prediction failed: {e}")
 
             # Enhanced fallback features
             weekend = is_weekend(parsed_date.weekday())
@@ -185,12 +255,15 @@ def predict_from_form(form_data):
             try:
                 prediction = model.predict(enhanced_features)[0]
                 if prediction > 0:
+                    print(f"DEBUG: Enhanced ML prediction: {prediction}")
                     return float(prediction)
-            except:
-                pass
+            except Exception as e:
+                print(f"DEBUG: Enhanced features prediction failed: {e}")
 
         # If all else fails, use fallback
-        return get_fallback_prediction(data)
+        fallback = get_fallback_prediction(data)
+        print(f"DEBUG: Using fallback prediction: {fallback}")
+        return fallback
 
     except Exception as e:
         print(f"[ML_MODEL] Prediction failed: {e}")

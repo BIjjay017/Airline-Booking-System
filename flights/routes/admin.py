@@ -1,15 +1,16 @@
-from flask import flash, Blueprint, render_template, request, redirect, url_for, session
+from flask import flash, Blueprint, render_template, request, redirect, url_for, session, jsonify
 from flights.config import get_db_connection
 from datetime import datetime, date, timedelta
-from flights.utils.ml_model import predict_from_form
+from flights.utils.ml_model import predict_from_form, validate_prediction_input
 import re
+import os
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-# Hardcoded admin credentials (can be moved to DB later)
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
+# Admin credentials from environment variables
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 # ----------------------
 # 🔹 Admin Authentication
@@ -117,6 +118,23 @@ def baggage_to_kg(b):
 
 
 
+def get_lookup_data(cur):
+    """Get all lookup data for forms"""
+    cur.execute("SELECT airport_id, code, city FROM airports ORDER BY code")
+    airports = cur.fetchall()
+    
+    cur.execute("SELECT aircraft_id, code, name FROM aircraft_types ORDER BY code")
+    aircraft_types = cur.fetchall()
+    
+    cur.execute("SELECT class_id, code, description FROM flight_classes ORDER BY code")
+    flight_classes = cur.fetchall()
+    
+    cur.execute("SELECT baggage_id, allowance, weight_kg FROM baggage_options ORDER BY weight_kg")
+    baggage_options = cur.fetchall()
+    
+    return airports, aircraft_types, flight_classes, baggage_options
+
+
 @admin_bp.route("/flights/add", methods=["GET", "POST"])
 def add_flight():
     if not session.get("is_admin"):
@@ -124,8 +142,9 @@ def add_flight():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT airport_id, code, city FROM airports")
-    airports = cur.fetchall()
+    
+    # Get lookup data from database
+    airports, aircraft_types, flight_classes, baggage_options = get_lookup_data(cur)
 
     if request.method == "POST":
         flight_number = request.form["flight_number"]
@@ -139,34 +158,33 @@ def add_flight():
         departure_time_str = request.form["departure_time"]
         departure_time = datetime.strptime(departure_time_str, "%Y-%m-%dT%H:%M")
 
-        duration_hours = int(request.form.get("duration_minutes", 0))
+        duration_hours = int(request.form.get("duration_hours", 0))
         duration_minutes = int(request.form.get("duration_minutes", 0))
         arrival_time = departure_time + timedelta(hours=duration_hours, minutes=duration_minutes)
 
         total_seats = int(request.form["total_seats"])
-        flight_class = request.form["class"]
-        baggage_allowance = request.form.get("baggage_allowance", "15KG + 5KG")  # keep string format
+        flight_class = request.form["flight_class"]
+        baggage_allowance = request.form.get("baggage_allowance", "15KG + 5KG")
         refund_type = request.form["refund_type"]
         aircraft_type = request.form.get("aircraft_type", "ATR72")
 
-        # --- Features for ML model ---
+        # Build form data for ML model - uses normalized keys
         form_data = {
-            "Airline Name": "YETI AIRLINES",  # you can make dynamic later
-            "Aircraft Type": aircraft_type.strip(),
-            "Departure Airport": origin_code.strip().upper(),
-            "Arrival Airport": destination_code.strip().upper(),
-            "Departure Time": departure_time.strftime("%H:%M"),
-            "Arrival Time": arrival_time.strftime("%H:%M"),
-            "Class": flight_class.strip(),  # must match model keys exactly
-            "Baggage Allowance": baggage_allowance.strip(),  # string format like "15KG + 5KG"
-            "Refundable Status": refund_type.strip(),  # "Refundable" / "NonRefundable"
-            "Date": departure_time.strftime("%d-%b-%Y")
+            "aircraft_type": aircraft_type,
+            "departure_airport": origin_code,
+            "arrival_airport": destination_code,
+            "departure_time": departure_time.strftime("%H:%M"),
+            "arrival_time": arrival_time.strftime("%H:%M"),
+            "flight_class": flight_class,
+            "baggage_allowance": baggage_allowance,
+            "refundable_status": refund_type,
+            "date": departure_time.strftime("%Y-%m-%d")
         }
 
-        # DEBUG: check features sent to ML
         print("DEBUG: Features sent to ML model:", form_data)
 
-        price = predict_from_form(form_data)  # make sure this function expects exactly these keys
+        # Get predicted price from ML model
+        price = predict_from_form(form_data)
 
         # Prevent past flights
         if departure_time < datetime.now():
@@ -182,24 +200,53 @@ def add_flight():
             """
             INSERT INTO flights
                 (flight_number, origin_id, destination_id, departure_time, duration,
-                 total_seats, available_seats, class, baggage_allowance, refund_type, price)
-            VALUES (%s, %s, %s, %s, %s::interval, %s, %s, %s, %s, %s, %s);
+                 total_seats, available_seats, price)
+            VALUES (%s, %s, %s, %s, %s::interval, %s, %s, %s);
             """,
             (
                 flight_number, origin_id, destination_id, departure_time, duration_str,
-                total_seats, total_seats, flight_class, baggage_allowance, refund_type, price
+                total_seats, total_seats, price
             )
         )
         conn.commit()
 
         cur.close()
         conn.close()
-        flash(f"Flight added successfully! Predicted price: {price:.2f}", "success")
+        flash(f"Flight added successfully! Predicted price: NPR {price:.2f}", "success")
         return redirect(url_for("admin.list_flights"))
 
     cur.close()
     conn.close()
-    return render_template("admin_add_flight.html", airports=airports)
+    return render_template(
+        "admin_add_flight.html",
+        airports=airports,
+        aircraft_types=aircraft_types,
+        flight_classes=flight_classes,
+        baggage_options=baggage_options,
+        today=datetime.now().strftime("%Y-%m-%dT%H:%M")
+    )
+
+
+@admin_bp.route("/api/predict-price", methods=["POST"])
+def api_predict_price():
+    """API endpoint for AJAX price prediction"""
+    if not session.get("is_admin"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    # Validate input
+    errors = validate_prediction_input(data)
+    if errors:
+        return jsonify({"error": ", ".join(errors)}), 400
+    
+    try:
+        price = predict_from_form(data)
+        return jsonify({"price": round(price, 2)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
