@@ -1,8 +1,7 @@
 from flask import flash, Blueprint, render_template, request, redirect, url_for, session, jsonify
 from flights.config import get_db_connection
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 from flights.utils.ml_model import predict_from_form, validate_prediction_input
-import re
 import os
 
 
@@ -102,22 +101,6 @@ JOIN airports ad ON f.destination_id = ad.airport_id
     return render_template("admin_flights.html", flights=flights, now=datetime.now())
 
 
-def baggage_to_kg(b):
-    """Convert baggage allowance string to kg"""
-    b = str(b).upper().strip()
-    if "+" in b:  # e.g., "15KG + 5KG"
-        nums = re.findall(r"(\d+\.?\d*)", b)
-        return sum(float(x) for x in nums)
-    if "KG" in b:
-        nums = re.findall(r"(\d+\.?\d*)", b)
-        return float(nums[0]) if nums else 0
-    if "PIECE" in b:
-        nums = re.findall(r"(\d+)", b)
-        return int(nums[0]) * 23  # assume 1 piece = 23kg
-    return 0
-
-
-
 def get_lookup_data(cur):
     """Get all lookup data for forms"""
     cur.execute("SELECT airport_id, code, city FROM airports ORDER BY code")
@@ -180,8 +163,6 @@ def add_flight():
             "refundable_status": refund_type,
             "date": departure_time.strftime("%Y-%m-%d")
         }
-
-        print("DEBUG: Features sent to ML model:", form_data)
 
         # Get predicted price from ML model
         price = predict_from_form(form_data)

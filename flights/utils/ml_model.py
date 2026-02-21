@@ -193,11 +193,6 @@ def predict_from_form(form_data):
     Returns:
         float: predicted price or fallback price
     """
-    if model is None:
-        print("DEBUG: ML model not loaded, using fallback")
-    else:
-        print("DEBUG: ML model loaded, using it for prediction")
-
     # Normalize keys and extract data
     normalized = {}
     for key, value in form_data.items():
@@ -218,8 +213,6 @@ def predict_from_form(form_data):
         'Refundable Status': normalized.get('refundable_status', 'NonRefundable'),
         'Date': normalized.get('date', '29-Aug')
     }
-    
-    print(f"DEBUG: Normalized prediction data: {data}")
 
     try:
         if model is not None:
@@ -239,10 +232,9 @@ def predict_from_form(form_data):
             try:
                 prediction = model.predict(basic_features)[0]
                 if prediction > 0:
-                    print(f"DEBUG: ML prediction successful: {prediction}")
                     return float(prediction)
-            except Exception as e:
-                print(f"DEBUG: Basic features prediction failed: {e}")
+            except Exception:
+                pass
 
             # Enhanced fallback features
             weekend = is_weekend(parsed_date.weekday())
@@ -255,18 +247,13 @@ def predict_from_form(form_data):
             try:
                 prediction = model.predict(enhanced_features)[0]
                 if prediction > 0:
-                    print(f"DEBUG: Enhanced ML prediction: {prediction}")
                     return float(prediction)
-            except Exception as e:
-                print(f"DEBUG: Enhanced features prediction failed: {e}")
+            except Exception:
+                pass
 
-        # If all else fails, use fallback
-        fallback = get_fallback_prediction(data)
-        print(f"DEBUG: Using fallback prediction: {fallback}")
-        return fallback
+        return get_fallback_prediction(data)
 
-    except Exception as e:
-        print(f"[ML_MODEL] Prediction failed: {e}")
+    except Exception:
         return get_fallback_prediction(data)
 
 
