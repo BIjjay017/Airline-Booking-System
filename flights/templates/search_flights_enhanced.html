@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% block title %}Search Flights - SkyBooker{% endblock %}
+{% block content %}
+<div class="container-fluid py-5">
+  {% if validation_errors %}
+    <div class="row justify-content-center mb-3">
+      <div class="col-lg-11">
+        <div class="alert alert-danger" role="alert">
+          <ul class="mb-0">
+            {% for error in validation_errors %}
+              <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Search Form Section -->
+  <div class="row justify-content-center mb-5">
+    <div class="col-lg-11">
+      <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-gradient-primary text-white py-4 rounded-top-4">
+          <h2 class="h3 mb-0"><i class="fas fa-search me-2"></i>Search Flights</h2>
+          <p class="text-white-70 mb-0">Find and book your next adventure</p>
+        </div>
+        
+        <div class="card-body p-4">
+          <form id="searchForm" method="POST" class="row g-3">
+            <!-- Destination Grid -->
+            <div class="col-md-5">
+              <label for="origin" class="form-label fw-semibold mb-2">
+                <i class="fas fa-plane-departure me-2 text-primary"></i>From:
+              </label>
+              <select id="origin" name="origin" class="form-select form-select-lg border-2" 
+                      aria-label="Origin airport" required>
+                <option value="">Select Origin Airport</option>
+                {% for code, name in airports %}
+                  <option value="{{ code }}" 
+                          {% if search_params.get('origin') == code %}selected{% endif %}>
+                    {{ code }} - {{ name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-5">
+              <label for="destination" class="form-label fw-semibold mb-2">
+                <i class="fas fa-plane-arrival me-2 text-primary"></i>To:
+              </label>
+              <select id="destination" name="destination" class="form-select form-select-lg border-2" 
+                      aria-label="Destination airport" required>
+                <option value="">Select Destination Airport</option>
+                {% for code, name in airports %}
+                  <option value="{{ code }}" 
+                          {% if search_params.get('destination') == code %}selected{% endif %}>
+                    {{ code }} - {{ name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="button" id="swapBtn" class="btn btn-outline-primary btn-lg w-100" 
+                      title="Swap origin and destination">
+                <i class="fas fa-exchange-alt"></i>
+              </button>
+            </div>
+
+            <!-- Date and Passenger Selection -->
+            <div class="col-md-4">
+              <label for="date" class="form-label fw-semibold mb-2">
+                <i class="fas fa-calendar me-2 text-primary"></i>Departure Date:
+              </label>
+              <input type="date" id="date" name="date" class="form-control form-control-lg border-2"
+                     min="{{ today }}" 
+                     value="{{ search_params.get('date', '') }}" 
+                     required>
+            </div>
+
+            <div class="col-md-4">
+              <label for="tickets" class="form-label fw-semibold mb-2">
+                <i class="fas fa-users me-2 text-primary"></i>Passengers:
+              </label>
+              <select id="tickets" name="tickets" class="form-select form-select-lg border-2">
+                {% for i in range(1, 7) %}
+                  <option value="{{ i }}" 
+                          {% if search_params.get('tickets', 1)|int == i %}selected{% endif %}>
+                    {{ i }} {{ 'passenger' if i == 1 else 'passengers' }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary btn-lg w-100 px-5 py-3" 
+                      id="searchBtn">
+                <i class="fas fa-search me-2"></i>
+                <span id="searchBtnText">Search Flights</span>
+                <span id="searchSpinner" class="spinner-border spinner-border-sm ms-2 d-none" 
+                      role="status" aria-hidden="true"></span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Quick Filter Options -->
+          <div class="row mt-4 pt-3 border-top">
+            <div class="col-12">
+              <p class="text-muted mb-2">Quick filters:</p>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-secondary quick-filter" 
+                        data-days="0">Today</button>
+                <button type="button" class="btn btn-outline-secondary quick-filter" 
+                        data-days="1">Tomorrow</button>
+                <button type="button" class="btn btn-outline-secondary quick-filter" 
+                        data-days="7">Next Week</button>
+                <button type="button" class="btn btn-outline-secondary quick-filter" 
+                        data-days="14">Next 2 Weeks</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price Information -->
+  <div class="row justify-content-center mb-4" id="priceInfoSection" style="display:none;">
+    <div class="col-lg-11">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body text-center">
+              <p class="text-muted mb-1">Average Price</p>
+              <h4 class="text-primary" id="avgPrice">-</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body text-center">
+              <p class="text-muted mb-1">Lowest Price</p>
+              <h4 class="text-success" id="minPrice">-</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body text-center">
+              <p class="text-muted mb-1">Highest Price</p>
+              <h4 class="text-danger" id="maxPrice">-</h4>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body text-center">
+              <p class="text-muted mb-1">Available Flights</p>
+              <h4 class="text-info" id="flightCount">-</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  {% if flights is not none %}
+    <div class="row justify-content-center">
+      <div class="col-lg-11">
+        {% if flights %}
+          <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-success text-white py-3 rounded-top-4">
+              <div class="row align-items-center">
+                <div class="col">
+                  <h3 class="h4 mb-0">
+                    <i class="fas fa-plane me-2"></i>Available Flights 
+                    <span class="badge bg-light text-dark ms-2">{{ flights|length }}</span>
+                  </h3>
+                </div>
+                <div class="col-auto">
+                  <button type="button" class="btn btn-sm btn-light" id="sortToggle" 
+                          title="Toggle sort options">
+                    <i class="fas fa-sort me-1"></i>Sort
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sort Options (Hidden by default) -->
+            <div id="sortOptions" class="card-body bg-light border-bottom" style="display:none;">
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-primary sort-option" 
+                        data-sort="departure">Departure Time</button>
+                <button type="button" class="btn btn-outline-primary sort-option" 
+                        data-sort="price">Price (Low to High)</button>
+                <button type="button" class="btn btn-outline-primary sort-option" 
+                        data-sort="duration">Duration</button>
+                <button type="button" class="btn btn-outline-primary sort-option" 
+                        data-sort="availability">Seat Availability</button>
+              </div>
+            </div>
+
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 flight-table">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th class="ps-4">Flight</th>
+                      <th>Route</th>
+                      <th>Departure</th>
+                      <th>Duration</th>
+                      <th>Seats</th>
+                      <th>Price</th>
+                      <th class="pe-4">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for flight in flights %}
+                    <tr class="flight-row" data-flight-id="{{ flight[0] }}" 
+                        data-price="{{ flight[10] }}" 
+                        data-departure="{{ flight[6] }}"
+                        data-available="{{ flight[9] }}">
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                          <div class="airline-badge me-2">✈</div>
+                          <strong>{{ flight[1] }}</strong>
+                        </div>
+                      </td>
+                      <td>
+                        <small>
+                          <span class="badge bg-info">{{ flight[2] }}</span>
+                          <i class="fas fa-arrow-right mx-1 text-muted"></i>
+                          <span class="badge bg-info">{{ flight[4] }}</span>
+                        </small>
+                      </td>
+                      <td>
+                        <div>
+                          <strong>{{ flight[6].strftime('%H:%M') if flight[6].__class__.__name__ == 'datetime' else flight[6] }}</strong>
+                          <br/>
+                          <small class="text-muted">
+                            {% set origin_date = flight[6].date() if flight[6].__class__.__name__ == 'datetime' else flight[6] %}
+                            {{ origin_date }}
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <small>{{ flight[7] or '-' }}</small>
+                      </td>
+                      <td>
+                        <div class="seat-indicator">
+                          <span class="badge {% if flight[9] >= (search_params.get('tickets', 1)|int) %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ flight[9] }}/{{ flight[8] }}
+                          </span>
+                          <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar" 
+                                 style="width: {{ ((flight[8] - flight[9]) / flight[8] * 100)|int }}%;">
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="price-display">
+                          <strong class="text-primary fs-5"> रु {{ "%.2f"|format(flight[10]) }}</strong>
+                          <br/>
+                          <small class="text-muted dynamic-price" 
+                                 data-origin="{{ search_params.get('origin', '') }}"
+                                 data-destination="{{ search_params.get('destination', '') }}"
+                                 data-date="{{ search_params.get('date', '') }}"
+                                 style="display:none;"></small>
+                        </div>
+                      </td>
+                      <td class="pe-4">
+                        {% if session.get("user_id") %}
+                          <form method="POST" action="{{ url_for('bookings.book_flight', flight_id=flight[0]) }}" 
+                                class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-success btn-book" 
+                                    onclick="return confirm('Proceed with booking?')">
+                              <i class="fas fa-ticket-alt me-1"></i>Book
+                            </button>
+                          </form>
+                        {% else %}
+                          <a href="{{ url_for('auth.login', next=url_for('flights.search_flights')) }}" 
+                             class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                          </a>
+                        {% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>No flights found</strong> for this route and date. Try different dates or airports.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Enhanced Styles -->
+<style>
+  :root {
+    --primary-grad: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+    --success-grad: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  .card {
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1) !important;
+    transform: translateY(-2px);
+  }
+
+  .bg-gradient-primary {
+    background: var(--primary-grad) !important;
+  }
+
+  .flight-row {
+    border-bottom: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+  }
+
+  .flight-row:hover {
+    background-color: #f8fafc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .airline-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+  }
+
+  .btn-book {
+    transition: all 0.3s ease;
+  }
+
+  .btn-book:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .progress {
+    background-color: #e5e7eb;
+  }
+
+  .progress-bar {
+    background: var(--success-grad);
+  }
+
+  .quick-filter, .sort-option {
+    transition: all 0.3s ease;
+  }
+
+  .quick-filter:hover, .sort-option:hover {
+    transform: translateY(-2px);
+  }
+
+  .form-select-lg, .form-control-lg {
+    border-radius: 12px;
+  }
+
+  .border-2 {
+    border-width: 2px !important;
+  }
+
+  /* Animation for loading */
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .flight-row td {
+      font-size: 0.875rem;
+    }
+
+    .btn-book {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+</style>
+
+<!-- Enhanced JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Swap origin and destination
+  document.getElementById('swapBtn').addEventListener('click', function() {
+    const origin = document.getElementById('origin');
+    const destination = document.getElementById('destination');
+    const temp = origin.value;
+    origin.value = destination.value;
+    destination.value = temp;
+  });
+
+  // Quick date filters
+  document.querySelectorAll('.quick-filter').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const daysToAdd = parseInt(this.dataset.days);
+      const date = new Date();
+      date.setDate(date.getDate() + daysToAdd);
+      document.getElementById('date').value = date.toISOString().split('T')[0];
+      this.classList.add('active');
+      document.querySelectorAll('.quick-filter').forEach(b => {
+        if (b !== this) b.classList.remove('active');
+      });
+    });
+  });
+
+  // Sort toggle
+  document.getElementById('sortToggle')?.addEventListener('click', function() {
+    const sortOptions = document.getElementById('sortOptions');
+    sortOptions.style.display = sortOptions.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Sort functionality
+  document.querySelectorAll('.sort-option').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const sortBy = this.dataset.sort;
+      sortFlights(sortBy);
+    });
+  });
+
+  // Load price trends when search form loads
+  const origin = document.getElementById('origin').value;
+  const destination = document.getElementById('destination').value;
+  if (origin && destination) {
+    loadPriceTrends(origin, destination);
+  }
+
+  // Form submission handling
+  document.getElementById('searchForm')?.addEventListener('submit', function(e) {
+    const searchBtn = document.getElementById('searchBtn');
+    const spinner = document.getElementById('searchSpinner');
+    searchBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    document.getElementById('searchBtnText').textContent = 'Searching...';
+  });
+});
+
+function sortFlights(sortBy) {
+  const tbody = document.querySelector('.flight-table tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  rows.sort((a, b) => {
+    switch(sortBy) {
+      case 'price':
+        return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+      case 'departure':
+        return a.dataset.departure.localeCompare(b.dataset.departure);
+      case 'availability':
+        return parseInt(b.dataset.available) - parseInt(a.dataset.available);
+      default:
+        return 0;
+    }
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+function loadPriceTrends(origin, destination) {
+  // This would call the /api/price-trends endpoint
+  const priceInfoSection = document.getElementById('priceInfoSection');
+  
+  fetchWithCSRF('{{ url_for("flights.get_price_trends") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ origin, destination })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById('avgPrice').textContent = 
+        'रु ' + data.stats.average_price.toFixed(0);
+      document.getElementById('minPrice').textContent = 
+        ' रु ' + data.stats.minimum_price.toFixed(0);
+      document.getElementById('maxPrice').textContent = 
+        'रु ' + data.stats.maximum_price.toFixed(0);
+      document.getElementById('flightCount').textContent = 
+        data.stats.flight_count;
+      priceInfoSection.style.display = 'block';
+    }
+  })
+  .catch(err => console.log('Trends load error:', err));
+}
+</script>
+{% endblock %}

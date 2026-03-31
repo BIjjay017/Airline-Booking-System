@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}Login - SkyBooker{% endblock %}
+{% block content %}
+<div class="container-fluid d-flex align-items-center justify-content-center min-vh-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+  <div class="row w-100 px-3">
+    <div class="col-md-5 col-lg-4 mx-auto">
+      <div class="card border-0 shadow-lg rounded-4">
+        <div class="card-body p-5">
+          <!-- Logo -->
+          <div class="text-center mb-4">
+            <div class="display-4 mb-3">
+              <i class="fas fa-plane-departure text-primary"></i>
+            </div>
+            <h1 class="h3 fw-bold mb-1">BookSmart</h1>
+            <p class="text-muted">Book flights. Explore the world.</p>
+          </div>
+
+          <!-- Login Form -->
+          <form method="POST" id="loginForm" novalidate>
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Email Input -->
+            <div class="mb-3">
+              <label for="email" class="form-label fw-semibold">
+                <i class="fas fa-envelope me-2 text-primary"></i>Email Address
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                class="form-control form-control-lg border-2"
+                placeholder="your@email.com"
+                required
+                autocomplete="email"
+                aria-describedby="emailHelp">
+              <div id="emailError" class="invalid-feedback d-block" style="display: none;">
+                Please enter a valid email address
+              </div>
+            </div>
+
+            <!-- Password Input -->
+            <div class="mb-3">
+              <label for="password" class="form-label fw-semibold">
+                <i class="fas fa-lock me-2 text-primary"></i>Password
+              </label>
+              <div class="input-group">
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  class="form-control form-control-lg border-2"
+                  placeholder="Enter your password"
+                  required
+                  autocomplete="current-password"
+                  aria-describedby="passwordHelp">
+                <button 
+                  type="button" 
+                  class="btn btn-outline-secondary"
+                  id="togglePassword"
+                  aria-label="Toggle password visibility">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <small class="text-muted d-block mt-2">
+                <i class="fas fa-info-circle me-1"></i>
+                Password must be at least 8 characters with uppercase, lowercase, number, and special character
+              </small>
+            </div>
+
+            <!-- Remember Me -->
+            <div class="form-check mb-3">
+              <input 
+                type="checkbox" 
+                id="rememberMe" 
+                name="remember_me" 
+                class="form-check-input"
+                value="on">
+              <label for="rememberMe" class="form-check-label">
+                Remember me for 30 days
+              </label>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="loginBtn"
+              class="btn btn-primary btn-lg w-100 fw-semibold py-3 mb-3">
+              <i class="fas fa-sign-in-alt me-2"></i>
+              <span id="loginBtnText">Sign In</span>
+              <span id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+
+            <!-- Forgot Password Link -->
+            <div class="text-center mb-3">
+              <a href="{{ url_for('auth.forgot_password') }}" class="text-primary text-decoration-none fw-semibold">
+                <i class="fas fa-key me-1"></i>Forgot password?
+              </a>
+            </div>
+          </form>
+
+          <!-- Divider -->
+          <div class="my-4">
+            <hr class="my-3">
+            <p class="text-center text-muted small mb-0">New to BookSmart?</p>
+          </div>
+
+          <!-- Sign Up Link -->
+          <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary btn-lg w-100 fw-semibold py-3">
+            <i class="fas fa-user-plus me-2"></i>Create an Account
+          </a>
+
+          <!-- Features List -->
+          <div class="mt-5 pt-4 border-top">
+            <p class="text-muted small mb-3 fw-semibold">Why choose BookSmart?</p>
+            <ul class="list-unstyled small text-muted">
+              <li class="mb-2">
+                <i class="fas fa-check text-success me-2"></i>
+                <strong>Best Prices</strong> - Dynamic pricing for maximum savings
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check text-success me-2"></i>
+                <strong>24/7 Support</strong> - Always here to help
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check text-success me-2"></i>
+                <strong>Secure Booking</strong> - Your data is encrypted
+              </li>
+              <li>
+                <i class="fas fa-check text-success me-2"></i>
+                <strong>Instant Confirmation</strong> - Immediate booking confirmation
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Note -->
+      <div class="text-center mt-4">
+        <small class="text-white-70">
+          <i class="fas fa-lock me-1"></i>
+          Your login is protected by enterprise-grade security
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Styles -->
+<style>
+  .min-vh-100 {
+    min-height: 100vh;
+  }
+
+  .card {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .form-control, .form-control:focus {
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  }
+
+  .form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+  }
+
+  .text-white-70 {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  @media (max-width: 576px) {
+    .card-body {
+      padding: 2rem 1.5rem !important;
+    }
+
+    .display-4 {
+      font-size: 2rem;
+    }
+  }
+
+  /* Loading animation */
+  .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+  }
+
+  /* Password visibility toggle */
+  #togglePassword {
+    border-left: none;
+  }
+
+  #togglePassword:hover {
+    background-color: #f8f9fa;
+  }
+</style>
+
+<!-- Enhanced JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loginForm = document.getElementById('loginForm');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  const loginBtn = document.getElementById('loginBtn');
+
+  // Password visibility toggle
+  togglePasswordBtn.addEventListener('click', function() {
+    const type = passwordInput.type === 'password' ? 'text' : 'password';
+    passwordInput.type = type;
+    this.querySelector('i').classList.toggle('fa-eye');
+    this.querySelector('i').classList.toggle('fa-eye-slash');
+  });
+
+  // Email validation
+  emailInput.addEventListener('blur', function() {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isValid = emailPattern.test(this.value);
+    document.getElementById('emailError').style.display = isValid ? 'none' : 'block';
+  });
+
+  // Form submission with loading state
+  loginForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Validate inputs
+    if (!emailInput.value || !passwordInput.value) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    // Show loading state
+    loginBtn.disabled = true;
+    const spinner = document.getElementById('loginSpinner');
+    const btnText = document.getElementById('loginBtnText');
+    spinner.classList.remove('d-none');
+    btnText.textContent = 'Signing in...';
+
+    // Add small delay for user feedback
+    setTimeout(() => {
+      loginForm.submit();
+    }, 500);
+  });
+
+  // Prevent special characters in email
+  emailInput.addEventListener('input', function() {
+    this.value = this.value.trim();
+  });
+});
+</script>
+{% endblock %}
