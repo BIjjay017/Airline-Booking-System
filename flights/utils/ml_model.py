@@ -204,8 +204,8 @@ def predict_from_form(form_data):
     data = {
         'Airline Name': normalized.get('airline_name', 'YETI AIRLINES'),
         'Aircraft Type': normalized.get('aircraft_type', 'ATR72'),
-        'Departure Airport': normalized.get('departure_airport', 'KATHMANDU').upper(),
-        'Arrival Airport': normalized.get('arrival_airport', 'POKHARA').upper(),
+        'Departure Airport': normalized.get('departure_airport', 'KTM').upper(),
+        'Arrival Airport': normalized.get('arrival_airport', 'PKR').upper(),
         'Departure Time': normalized.get('departure_time', '18:50'),
         'Arrival Time': normalized.get('arrival_time', '19:15'),
         'Class': normalized.get('flight_class', 'E1'),
@@ -259,14 +259,37 @@ def predict_from_form(form_data):
 
 def get_fallback_prediction(data):
     """Simple rule-based fallback for Nepal flights"""
+    airport_aliases = {
+        'KATHMANDU': 'KTM',
+        'TRIBHUVAN': 'KTM',
+        'POKHARA': 'PKR',
+        'BIRATNAGAR': 'BIR',
+        'DHANGADI': 'DHI',
+        'NEPALGUNJ': 'KEP'
+    }
+
+    dep_raw = str(data.get('Departure Airport', 'KTM')).strip().upper()
+    arr_raw = str(data.get('Arrival Airport', 'PKR')).strip().upper()
+    dep = airport_aliases.get(dep_raw, dep_raw)
+    arr = airport_aliases.get(arr_raw, arr_raw)
+
     base_price = 4000
     baggage_kg = baggage_to_kg(data['Baggage Allowance'])
     base_price += 10 * baggage_kg
     if 'Refundable' in data['Refundable Status']:
         base_price *= 1.3
     # Add simple route adjustments
-    routes = {('KATHMANDU', 'POKHARA'): 3895, ('POKHARA', 'KATHMANDU'): 3895}
-    route_price = routes.get((data['Departure Airport'], data['Arrival Airport']))
+    routes = {
+        ('KTM', 'PKR'): 3895,
+        ('PKR', 'KTM'): 3895,
+        ('KTM', 'BIR'): 5205,
+        ('BIR', 'KTM'): 5205,
+        ('KTM', 'DHI'): 5715,
+        ('DHI', 'KTM'): 5715,
+        ('KTM', 'KEP'): 6105,
+        ('KEP', 'KTM'): 6105
+    }
+    route_price = routes.get((dep, arr))
     if route_price:
         base_price = route_price
     return float(base_price)
