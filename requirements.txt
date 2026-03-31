@@ -1,0 +1,36 @@
+# Flight Booking System - Requirements
+# Python 3.8+
+
+# Core Flask
+Flask==2.3.2
+Flask-Mail==0.9.1
+python-dotenv==1.0.0
+
+# Security & Authentication
+Flask-WTF==1.1.1
+Werkzeug==2.3.6
+itsdangerous==2.1.2
+bleach==6.0.0
+Flask-Cors==4.0.0
+
+# Database
+psycopg2-binary==2.9.6
+
+# Machine Learning & Data Processing
+scikit-learn==1.3.0
+numpy==1.24.3
+pandas==2.0.3
+joblib==1.3.1
+
+# Data Validation
+email-validator==2.0.0
+
+# Additional Utilities
+gunicorn==21.2.0  # For production deployment
+requests==2.31.0
+
+# Development Dependencies (optional)
+pytest==7.4.0
+pytest-cov==4.1.0
+black==23.7.0
+flake8==6.0.0

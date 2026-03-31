@@ -5,12 +5,16 @@
 .venv/
 venv/
 env/
+flights/venv/
+**/venv/
+**/.venv/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+**/__pycache__/
 
 # IDE
 .vscode/
