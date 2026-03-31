@@ -1,11 +1,14 @@
 from flask import Flask, redirect, url_for, render_template_string
 from flask_mail import Mail
+from flask_wtf.csrf import CSRFProtect
+from flask_cors import CORS
 from flights.routes.admin import admin_bp
 from flights.routes.auth import auth_bp
 from flights.routes.flights import flights_bp
 from flights.routes.bookings import bookings_bp
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Load environment variables
 load_dotenv()
@@ -13,7 +16,18 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = os.getenv("SECRET_KEY", "fallback-secret-key")
+    # Use a strong secret key
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key:
+        raise ValueError("SECRET_KEY environment variable is not set!")
+    app.secret_key = secret_key
+
+    # Security configurations
+    app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
     # Email config from environment variables
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'sandbox.smtp.mailtrap.io')
@@ -22,6 +36,25 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
     app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
     app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False').lower() == 'true'
+
+    # CSRF protection for form and AJAX requests
+    CSRFProtect(app)
+
+    # CORS with restricted origins
+    CORS(app, resources={
+        r"/flights/api/*": {"origins": os.getenv("ALLOWED_ORIGINS", "http://localhost:5000").split(",")}
+    })
+
+    # Security headers
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+        return response
 
     mail = Mail(app)
     # Register blueprints

@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flights.config import get_db_connection
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from flask_mail import Message
-import re
+from flights.utils.security import InputValidator, RateLimiter, sanitize_request_data, log_security_event
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -14,20 +14,16 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        name = request.form["name"]
-        email = request.form["email"]
-        password = request.form["password"]
+        sanitized = sanitize_request_data(request.form.to_dict())
+        name = sanitized.get("name", "")
+        email = sanitized.get("email", "").lower()
+        password = request.form.get("password", "")
 
-        errors = []
-
-        if len(password) < 8:
-            errors.append("at least 8 characters")
-        if not re.search(r"[A-Za-z]", password):
-            errors.append("at least one letter")
-        if not re.search(r"\d", password):
-            errors.append("at least one number")
-        if not re.search(r"[@$!%*?&]", password):
-            errors.append("at least one special character (@$!%*?&)")
+        errors = InputValidator.validate_user_data({
+            "name": name,
+            "email": email,
+            "password": password
+        })
 
         if errors:
             return render_template(
@@ -40,6 +36,14 @@ def signup():
         hashed_password = generate_password_hash(password)
         conn = get_db_connection()
         cur = conn.cursor()
+        cur.execute("SELECT 1 FROM users WHERE email=%s", (email,))
+        existing_user = cur.fetchone()
+        if existing_user:
+            cur.close()
+            conn.close()
+            flash("An account with this email already exists.", "danger")
+            return render_template("signup.html", name=name, email=email)
+
         cur.execute(
             "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
             (name, email, hashed_password),
@@ -57,8 +61,24 @@ def signup():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        sanitized = sanitize_request_data(request.form.to_dict())
+        email = sanitized.get("email", "").lower()
+        password = request.form.get("password", "")
+
+        if not InputValidator.validate_email(email):
+            flash("Invalid credentials", "danger")
+            return render_template("login.html")
+
+        ip_addr = request.remote_addr or "unknown"
+        limit_key = f"login:{ip_addr}:{email}"
+        if not RateLimiter.check_rate_limit(limit_key, max_attempts=5, window_seconds=300):
+            log_security_event(
+                "login_rate_limit_exceeded",
+                {"email": email, "ip": ip_addr},
+                severity="WARNING"
+            )
+            flash("Too many login attempts. Please try again in a few minutes.", "danger")
+            return render_template("login.html")
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -68,8 +88,10 @@ def login():
         conn.close()
 
         if user and check_password_hash(user[1], password):
+            RateLimiter.reset_limit(limit_key)
             session["user_id"] = user[0]
             session["username"] = user[2]
+            session.permanent = True
 
             next_url = request.args.get("next")
             tickets = request.args.get("tickets")
@@ -80,7 +102,13 @@ def login():
 
             return redirect(url_for("flights.search_flights"))
         else:
-            return "Invalid credentials"
+            log_security_event(
+                "invalid_login_attempt",
+                {"email": email, "ip": ip_addr},
+                severity="WARNING"
+            )
+            flash("Invalid credentials", "danger")
+            return render_template("login.html")
 
     return render_template("login.html")
 
@@ -99,7 +127,11 @@ def get_serializer():
 @auth_bp.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
-        email = request.form["email"]
+        email = InputValidator.sanitize_input(request.form.get("email", "")).lower()
+
+        if not InputValidator.validate_email(email):
+            flash("Please enter a valid email address.", "danger")
+            return render_template("forgot_password.html")
 
         # generate secure token
         s = get_serializer()
